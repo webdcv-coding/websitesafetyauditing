@@ -177,13 +177,16 @@
 
             // Render Hardening Button (Only if score is less than 100)
             const btn = document.getElementById('hardeningButton');
-            if (score < 100) {
-                btn.href = `mailto:?subject=Security Upgrade Request: ${domain}`;
-                btn.classList.remove('hidden');
-            } else {
-                btn.classList.add('hidden');
-            }
-
+if (score < 100) {
+    // This creates a link that opens the user's email app
+    const subject = encodeURIComponent(`Security Hardening Request for ${domain}`);
+    const body = encodeURIComponent(`Hello,\n\nI ran a security audit on ${domain} and received a score of ${score}/100. I would like to request professional assistance in fixing the following issues:\n\n- ${vulns.map(v => v.name).join('\n- ')}`);
+    
+    btn.href = `mailto:support@yourdomain.com?subject=${subject}&body=${body}`;
+    btn.classList.remove('hidden');
+} else {
+    btn.classList.add('hidden');
+}
             // Switch to Results UI
             document.getElementById('loadingSection').classList.add('hidden');
             document.getElementById('resultsSection').classList.remove('hidden');
