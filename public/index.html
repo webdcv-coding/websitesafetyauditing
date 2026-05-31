@@ -1,1 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebRapid | Security Audit Tool</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 min-h-screen flex flex-col items-center justify-center p-4">
 
+    <div class="max-w-md w-full bg-white p-8 rounded-xl shadow-lg border border-slate-100">
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-slate-900">WebRapid Audit</h1>
+            <p class="text-slate-500 text-sm">Check your website security status</p>
+        </div>
+
+        <!-- Input Section -->
+        <div class="space-y-4">
+            <input type="text" id="domainInput" placeholder="Enter domain (e.g., business.ie)" 
+                   class="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none transition">
+            <button onclick="runAudit()" id="auditBtn"
+                    class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
+                Run Audit
+            </button>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultDisplay" class="mt-8 hidden">
+            <!-- Dynamic content injected here -->
+        </div>
+    </div>
+
+    <script>
+        async function runAudit() {
+            const btn = document.getElementById('auditBtn');
+            const domain = document.getElementById('domainInput').value;
+            const display = document.getElementById('resultDisplay');
+
+            if (!domain) return alert("Please enter a domain");
+
+            btn.disabled = true;
+            btn.innerText = "Scanning...";
+            display.classList.remove('hidden');
+            display.innerHTML = '<p class="text-center text-slate-400">Analyzing TLS & Headers...</p>';
+
+            try {
+                const res = await fetch(`/api/audit?domain=${encodeURIComponent(domain)}`);
+                const data = await res.json();
+                
+                const scoreColor = data.score < 50 ? 'text-red-600' : (data.score < 80 ? 'text-orange-500' : 'text-green-600');
+                
+                display.innerHTML = `
+                    <div class="text-center">
+                        <div class="text-5xl font-extrabold ${scoreColor} mb-2">${data.score}/100</div>
+                        <p class="font-bold text-slate-800 mb-4">${data.status}</p>
+                        <ul class="text-left text-xs space-y-2 bg-slate-50 p-3 rounded border border-slate-100">
+                            ${data.vulnerabilities.map(v => `<li class="text-slate-600">• ${v}</li>`).join('')}
+                        </ul>
+                        ${data.score < 80 ? `
+                            <a href="mailto:richard@webrapid.ie?subject=Fix Website Security: ${data.domain}" 
+                               class="mt-6 block w-full bg-slate-900 text-white py-2 rounded-lg font-medium hover:bg-black transition">
+                               Request Security Hardening
+                            </a>` : '<p class="mt-6 text-green-600 text-sm font-semibold">Your site is secure!</p>'}
+                    </div>
+                `;
+            } catch (err) {
+                display.innerHTML = '<p class="text-red-500 text-center">Audit failed. Please try again.</p>';
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Run Audit";
+            }
+        }
+    </script>
+</body>
+</html>
