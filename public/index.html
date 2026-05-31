@@ -123,12 +123,15 @@
         });
 
         async function runAudit() {
-            const domain = domainInput.value.trim();
+    const domainInput = document.getElementById('domainInput'); // Make sure this matches the ID
+    const domain = domainInput.value.trim();
 
-            if (!domain) {
-                alert('Please enter a domain');
-                return;
-            }
+    console.log("Domain being sent:", domain); // Check this in the Console tab!
+
+    if (!domain) {
+        alert('Please enter a domain');
+        return;
+    }
 
             // Show loading state
             inputSection.classList.add('hidden');
