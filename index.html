@@ -182,7 +182,7 @@ if (score < 100) {
     const subject = encodeURIComponent(`Security Hardening Request for ${domain}`);
     const body = encodeURIComponent(`Hello,\n\nI ran a security audit on ${domain} and received a score of ${score}/100. I would like to request professional assistance in fixing the following issues:\n\n- ${vulns.map(v => v.name).join('\n- ')}`);
     
-    btn.href = `mailto:support@yourdomain.com?subject=${subject}&body=${body}`;
+    btn.href = `mailto: webrapid.apps@gmail.com?subject=${subject}&body=${body}`;
     btn.classList.remove('hidden');
 } else {
     btn.classList.add('hidden');
