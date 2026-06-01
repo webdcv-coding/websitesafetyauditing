@@ -124,7 +124,9 @@
             try {
                 // Call the Vercel Python Backend
                 const response = await fetch(`/api/index?domain=${encodeURIComponent(domain)}`);
-                const data = await response.json();
+                const text = await response.text();
+                console.log(text);
+                alert(text);
 
                 if (data.error) throw new Error(data.error);
 
