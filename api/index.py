@@ -1,10 +1,13 @@
+from http.server import BaseHTTPRequestHandler
+import json
+import urllib.parse
 import urllib.request
 import urllib.error
 import socket
 import ssl
 
+
 def get_audit_results(domain):
-    # DNS Verification
     try:
         socket.gethostbyname(domain)
     except socket.gaierror:
@@ -23,9 +26,7 @@ def get_audit_results(domain):
 
     req = urllib.request.Request(
         f"https://{domain}/",
-        headers={
-            "User-Agent": "Mozilla/5.0"
-        }
+        headers={"User-Agent": "Mozilla/5.0"}
     )
 
     try:
@@ -47,7 +48,6 @@ def get_audit_results(domain):
             "vulnerabilities": vulnerabilities
         }
 
-    # Clickjacking Protection
     if (
         "x-frame-options" not in headers
         and "content-security-policy" not in headers
@@ -58,7 +58,6 @@ def get_audit_results(domain):
             "description": "Missing X-Frame-Options and Content-Security-Policy headers."
         })
 
-    # Content Type Protection
     if "x-content-type-options" not in headers:
         score -= 15
         vulnerabilities.append({
@@ -66,7 +65,6 @@ def get_audit_results(domain):
             "description": "The browser may perform MIME-type sniffing."
         })
 
-    # Referrer Policy
     if "referrer-policy" not in headers:
         score -= 10
         vulnerabilities.append({
@@ -78,3 +76,34 @@ def get_audit_results(domain):
         "score": max(0, score),
         "vulnerabilities": vulnerabilities
     }
+
+
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        try:
+            parsed = urllib.parse.urlparse(self.path)
+            params = urllib.parse.parse_qs(parsed.query)
+
+            domain = params.get("domain", [""])[0]
+
+            if not domain:
+                result = {"error": "Missing domain parameter"}
+            else:
+                result = get_audit_results(domain)
+
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+
+            self.wfile.write(
+                json.dumps(result).encode("utf-8")
+            )
+
+        except Exception as e:
+            self.send_response(500)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+
+            self.wfile.write(
+                json.dumps({"error": str(e)}).encode("utf-8")
+            )
