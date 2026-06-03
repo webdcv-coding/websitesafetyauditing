@@ -8,68 +8,53 @@ def get_audit_results(domain):
     score = 100
     vulnerabilities = []
     headers = {}
+    
+    custom_headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
+    }
 
-    # 1. Primary Connection & SSL Check
     try:
-        # We use a session to better manage the connection
-        response = requests.get(url, timeout=10, verify=True, allow_redirects=True)
+        # Check the site with redirects followed
+        response = requests.get(url, timeout=10, verify=True, allow_redirects=True, headers=custom_headers)
         headers = {k.lower(): v for k, v in response.headers.items()}
     
     except requests.exceptions.SSLError:
-        # Site exists but SSL is broken/missing
-        score -= 50 
+        score -= 47 # Softened deduction
         vulnerabilities.append({
-            "name": "Invalid or Missing SSL",
-            "description": "The site is reachable but does not provide a valid SSL certificate. Traffic is not secure."
+            "name": "SSL Issues Detected",
+            "description": "Encryption is broken or missing. User data could be at risk."
         })
-        # Try to get headers anyway without SSL verification to see if the site is up
         try:
-            low_sec_res = requests.get(url, timeout=5, verify=False, allow_redirects=True)
+            low_sec_res = requests.get(url, timeout=5, verify=False, allow_redirects=True, headers=custom_headers)
             headers = {k.lower(): v for k, v in low_sec_res.headers.items()}
         except:
             pass
-
     except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-        return {
-            "score": 0,
-            "vulnerabilities": [{
-                "name": "Domain Unreachable",
-                "description": "Could not connect to the domain. Please check the spelling or your internet connection."
-            }]
-        }
-    except Exception as e:
-        return {
-            "score": 0,
-            "vulnerabilities": [{
-                "name": "Audit Error",
-                "description": "An unexpected error occurred during the scan."
-            }]
-        }
+        return {"score": 0, "vulnerabilities": [{"name": "Unreachable", "description": "Check the domain spelling."}]}
+    except Exception:
+        return {"score": 0, "vulnerabilities": [{"name": "Error", "description": "Audit failed to initialize."}]}
 
-    # 2. Check X-Frame-Options (Clickjacking)
-    # Checking both X-Frame and CSP for ancestors
+    # Security Header Checks (-3 from original suggestions)
     csp = headers.get("content-security-policy", "")
     if "x-frame-options" not in headers and "frame-ancestors" not in csp:
-        score -= 20
+        score -= 17 
         vulnerabilities.append({
-            "name": "Missing Clickjacking Protection",
-            "description": "The site is missing X-Frame-Options or a CSP frame-ancestors directive."
+            "name": "Missing Clickjacking Shield",
+            "description": "Your site could be loaded in a malicious iframe."
         })
 
-    # 3. Check HSTS (Strict-Transport-Security)
     if "strict-transport-security" not in headers:
-        score -= 15
+        score -= 12
         vulnerabilities.append({
-            "name": "Missing HSTS",
-            "description": "HSTS is not enabled. Browsers aren't forced to use secure connections."
+            "name": "HSTS Not Active",
+            "description": "Browser is not forced to use HTTPS for all requests."
         })
 
-    # 4. Check X-Content-Type-Options
     if "x-content-type-options" not in headers:
-        score -= 15
+        score -= 12
         vulnerabilities.append({
-            "name": "Missing X-Content-Type-Options",
-            "description": "The browser is allowed to 'sniff' the content type, which can lead to script injection."
+            "name": "Missing Sniffing Protection",
+            "description": "The browser might try to guess the file type, enabling injection."
         })
 
     return {
@@ -85,16 +70,12 @@ class handler(BaseHTTPRequestHandler):
 
         if not domain:
             self.send_response(400)
-            self.send_header('Content-type', 'application/json')
             self.end_headers()
-            self.wfile.write(json.dumps({"error": "No domain provided"}).encode())
             return
 
         result = get_audit_results(domain)
-
         self.send_response(200)
         self.send_header('Content-type', 'application/json')
         self.send_header('Access-Control-Allow-Origin', '*') 
         self.end_headers()
-        
         self.wfile.write(json.dumps(result).encode())
