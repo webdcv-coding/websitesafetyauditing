@@ -3,28 +3,30 @@ import json
 import urllib.parse
 import requests
 
-# Using a Session is more efficient for multiple requests
+# Session helps with speed; max_redirects prevents "Forever" loops
 session = requests.Session()
-session.max_redirects = 3 # Prevent redirect loops from hanging the audit
+session.max_redirects = 3
 
 def get_audit_results(domain):
-    # Clean the domain input just in case
-    domain = domain.replace('https://', '').replace('http://', '').split('/')[0]
+    # Clean input: remove protocol if user pasted it
+    domain = domain.replace('https://', '').replace('http://', '').split('/')[0].strip()
     url = f"https://{domain}"
     
     score = 100
     vulnerabilities = []
     headers = {}
     
+    # Professional User-Agent to prevent bot-blocking
     custom_headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8"
     }
 
     try:
-        # Tightened timeout to 5 seconds for the initial handshake
-        response = session.get(url, timeout=5, verify=True, allow_redirects=True, headers=custom_headers)
+        # stream=True is the 'magic'—it grabs headers without waiting for the whole page to load
+        response = session.get(url, timeout=6, verify=True, allow_redirects=True, headers=custom_headers, stream=True)
         headers = {k.lower(): v for k, v in response.headers.items()}
+        response.close() 
     
     except requests.exceptions.SSLError:
         score -= 47
@@ -32,37 +34,35 @@ def get_audit_results(domain):
             "name": "SSL Issues Detected",
             "description": "Encryption is broken or missing. User data could be at risk."
         })
-        # If SSL fails, try one quick non-verify grab
         try:
-            low_sec_res = session.get(url, timeout=3, verify=False, allow_redirects=True, headers=custom_headers)
+            # Quick fallback check if SSL is the only problem
+            low_sec_res = session.get(url, timeout=4, verify=False, allow_redirects=True, headers=custom_headers, stream=True)
             headers = {k.lower(): v for k, v in low_sec_res.headers.items()}
+            low_sec_res.close()
         except:
-            headers = {}
+            pass
 
     except (requests.exceptions.ConnectionError, requests.exceptions.Timeout):
-        return {"score": 0, "vulnerabilities": [{"name": "Unreachable", "description": "The website took too long to respond or the domain doesn't exist."}]}
-    except Exception as e:
-        return {"score": 0, "vulnerabilities": [{"name": "Scan Error", "description": "Could not complete the audit."}]}
+        return {"score": 0, "vulnerabilities": [{"name": "Unreachable", "description": "The site took too long to respond or doesn't exist."}]}
+    except Exception:
+        return {"score": 0, "vulnerabilities": [{"name": "Scan Error", "description": "Check domain spelling and try again."}]}
 
-    # --- Header Analysis ---
     if not headers:
-        return {"score": 0, "vulnerabilities": [{"name": "No Data", "description": "Could not retrieve security headers."}]}
+        return {"score": 0, "vulnerabilities": [{"name": "No Data", "description": "The server responded but provided no security headers."}]}
 
-    # 1. Clickjacking
+    # --- Header Logic ---
     csp = headers.get("content-security-policy", "")
     if "x-frame-options" not in headers and "frame-ancestors" not in csp:
         score -= 17 
-        vulnerabilities.append({"name": "Missing Clickjacking Shield", "description": "Site is vulnerable to being embedded in malicious frames."})
+        vulnerabilities.append({"name": "Missing Clickjacking Shield", "description": "Protection against being embedded in malicious frames is missing."})
 
-    # 2. HSTS
     if "strict-transport-security" not in headers:
         score -= 12
         vulnerabilities.append({"name": "HSTS Not Active", "description": "Browser is not forced to use HTTPS for all requests."})
 
-    # 3. Sniffing
     if "x-content-type-options" not in headers:
         score -= 12
-        vulnerabilities.append({"name": "Missing Sniffing Protection", "description": "Prevents the browser from interpreting files as a different MIME type."})
+        vulnerabilities.append({"name": "Missing Sniffing Protection", "description": "Prevents browsers from incorrectly interpreting file types."})
 
     return {
         "score": max(0, score),
