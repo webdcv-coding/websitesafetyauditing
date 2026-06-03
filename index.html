@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebRapid | Security Audit</title>
+    <title>WebShield | Security Header Scanner</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes ripple {
@@ -25,10 +25,18 @@
     <div class="flex items-center justify-center min-h-screen px-6 py-12">
         <div class="w-full max-w-2xl">
             
+            <!-- Branding Header -->
             <div class="mb-10 text-center">
-                <h1 class="text-4xl font-black tracking-tight text-white mb-3">WebRapid WebCheck<span class="text-red-500">.</span></h1>
+                <h1 class="text-4xl font-black tracking-tight text-white mb-3 italic uppercase">
+                    WebShield<span class="text-blue-500 not-italic">.</span>
+                </h1>
+                <div class="inline-flex items-center px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
+                    <span class="w-2 h-2 rounded-full bg-blue-500 animate-pulse mr-2"></span>
+                    <p class="text-[10px] text-blue-400 font-bold uppercase tracking-widest">Header Security Scanner</p>
+                </div>
             </div>
 
+            <!-- Input Section -->
             <div id="inputSection" class="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 md:p-12 transition-all duration-500">
                 <div class="space-y-6">
                     <div class="relative">
@@ -50,6 +58,7 @@
                 </div>
             </div>
 
+            <!-- Loading Section -->
             <div id="loadingSection" class="hidden bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-20 text-center">
                 <div class="flex flex-col items-center justify-center">
                     <div class="relative w-20 h-20 mb-10 flex items-center justify-center">
@@ -62,8 +71,10 @@
                 </div>
             </div>
 
+            <!-- Results Section -->
             <div id="resultsSection" class="hidden bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 md:p-12">
                 
+                <!-- Score Card Display -->
                 <div id="scoreCard" class="mb-10 p-8 rounded-2xl border border-white/5 text-center transition-colors duration-700">
                     <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Security Integrity Score</h2>
                     <div class="flex items-baseline justify-center">
@@ -72,15 +83,16 @@
                     </div>
                 </div>
 
+                <!-- Findings Container -->
                 <div class="mb-10">
                     <h3 class="text-sm font-bold text-slate-400 mb-6 uppercase tracking-widest flex items-center">
                         <span class="w-8 h-[1px] bg-slate-700 mr-3"></span>
                         Audit Findings
                     </h3>
-                    <div id="vulnerabilitiesList" class="space-y-4">
-                        </div>
+                    <div id="vulnerabilitiesList" class="space-y-4"></div>
                 </div>
 
+                <!-- Interaction Actions -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <button 
                         onclick="resetUI()"
@@ -90,13 +102,14 @@
                     </button>
                     <a 
                         id="hardeningButton"
-                        class="hidden flex items-center justify-center w-full bg-white hover:bg-slate-200 text-black font-bold py-4 rounded-xl transition shadow-xl"
+                        class="hidden flex items-center justify-center w-full font-bold py-4 rounded-xl transition shadow-xl"
                     >
-                        Hardening Guide
+                        <!-- Dynamic Button Configured via JS -->
                     </a>
                 </div>
             </div>
 
+            <!-- Error Section -->
             <div id="errorSection" class="hidden bg-red-950/20 backdrop-blur-xl border border-red-500/20 rounded-2xl p-12 text-center">
                 <div class="text-red-500 text-4xl mb-4">✕</div>
                 <h3 class="text-xl font-bold text-white mb-2">Audit Interrupted</h3>
@@ -123,6 +136,7 @@
             let domain = inputEl.value.trim();
             if (!domain) return;
 
+            // Extract core domain
             domain = domain.replace(/^https?:\/\//, '').split('/')[0];
 
             document.getElementById('inputSection').classList.add('hidden');
@@ -151,15 +165,16 @@
             scoreValue.innerText = score;
             scoreCard.className = 'mb-10 p-8 rounded-2xl border text-center transition-all duration-700';
             
+            // Adjust card color dynamically based on score thresholds
             if (score >= 80) {
                 scoreCard.classList.add('border-green-500/30', 'bg-green-500/5');
-                scoreValue.classList.add('text-green-400');
+                scoreValue.className = 'text-8xl font-black tracking-tighter text-green-400';
             } else if (score >= 50) {
                 scoreCard.classList.add('border-orange-500/30', 'bg-orange-500/5');
-                scoreValue.classList.add('text-orange-400');
+                scoreValue.className = 'text-8xl font-black tracking-tighter text-orange-400';
             } else {
                 scoreCard.classList.add('border-red-500/30', 'bg-red-500/5');
-                scoreValue.classList.add('text-red-400');
+                scoreValue.className = 'text-8xl font-black tracking-tighter text-red-400';
             }
 
             const listEl = document.getElementById('vulnerabilitiesList');
@@ -179,45 +194,50 @@
             }
 
             const btn = document.getElementById('hardeningButton');
-if (score < 100) {
-    const subject = encodeURIComponent(`WebShield Security Report: ${domain}`);
-    // A structured body helps you stay organized
-    const body = encodeURIComponent(
-        `WEB SHIELD AUDIT REPORT\n` +
-        `----------------------\n` +
-        `Domain: ${domain}\n` +
-        `Security Score: ${score}/100\n\n` +
-        `Issues Identified:\n${vulns.map(v => `- [ ] ${v.name}`).join('\n')}\n\n` +
-        `I would like to request a professional DNS & Security hardening for this domain. Please let me know the next steps.`
-    );
-    
-    btn.href = `mailto:webrapid.apps@gmail.com?subject=${subject}&body=${body}`;
-    btn.innerText = "Fix These Issues Now"; // More action-oriented
-    btn.classList.remove('hidden');
-}else {
-    // 2. SUCCESS / CLIPBOARD MODE
-    btn.removeAttribute('href');
-    btn.innerText = "Copy Result to Clipboard 📋";
-    btn.className = "block w-full text-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition shadow-xl cursor-pointer";
-    btn.classList.remove('hidden');
-    
-    btn.onclick = (e) => {
-        e.preventDefault();
-        const shareText = `🛡️ WebShield Scan: ${domain} scored 100/100! All security headers verified.`;
-        
-        navigator.clipboard.writeText(shareText).then(() => {
-            const originalText = btn.innerText;
-            btn.innerText = "Copied! Paste on Social Media to Share your score";
-            btn.classList.replace('bg-indigo-600', 'bg-green-600');
             
-            // Revert button after 3 seconds
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.classList.replace('bg-green-600', 'bg-indigo-600');
-            }, 3000);
-        });
-    };
-}
+            // Clear previous event setups to prevent behavior overlapping
+            btn.onclick = null;
+            btn.removeAttribute('href');
+
+            if (score < 100) {
+                // 1. HELP / FIXED MODE (Mail Client hook)
+                const subject = encodeURIComponent(`WebShield Security Report: ${domain}`);
+                const body = encodeURIComponent(
+                    `WEB SHIELD AUDIT REPORT\n` +
+                    `----------------------\n` +
+                    `Domain: ${domain}\n` +
+                    `Security Score: ${score}/100\n\n` +
+                    `Issues Identified:\n${vulns.map(v => `- [ ] ${v.name}`).join('\n')}\n\n` +
+                    `I would like to request professional assistance in hardening this domain. Please let me know the next steps.`
+                );
+                
+                btn.href = `mailto:webrapid.apps@gmail.com?subject=${subject}&body=${body}`;
+                btn.innerText = "Fix These Issues Now";
+                btn.className = "flex items-center justify-center w-full bg-white hover:bg-slate-200 text-black font-bold py-4 rounded-xl transition shadow-xl";
+                btn.classList.remove('hidden');
+            } else {
+                // 2. SUCCESS / COPY MODE
+                btn.innerText = "Copy Result to Clipboard 📋";
+                btn.className = "flex items-center justify-center w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition shadow-xl cursor-pointer";
+                btn.classList.remove('hidden');
+                
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    const shareText = `🛡️ WebShield Scan: ${domain} scored 100/100! All security headers verified.`;
+                    
+                    navigator.clipboard.writeText(shareText).then(() => {
+                        const originalText = btn.innerText;
+                        btn.innerText = "Copied! Paste in Reddit thread";
+                        btn.classList.replace('bg-indigo-600', 'bg-green-600');
+                        
+                        setTimeout(() => {
+                            btn.innerText = originalText;
+                            btn.classList.replace('bg-green-600', 'bg-indigo-600');
+                        }, 3000);
+                    });
+                };
+            }
+        }
 
         function resetUI() {
             document.getElementById('resultsSection').classList.add('hidden');
