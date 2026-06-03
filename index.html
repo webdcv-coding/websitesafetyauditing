@@ -5,202 +5,81 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebRapid | Security Audit</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes ripple {
+            0% { transform: scale(1); opacity: 0.4; }
+            100% { transform: scale(2.5); opacity: 0; }
+        }
+        .ripple-circle {
+            position: absolute;
+            border-radius: 50%;
+            background: #3b82f6;
+            animation: ripple 2s infinite ease-out;
+        }
+        .ripple-2 { animation-delay: 0.5s; }
+        .ripple-3 { animation-delay: 1s; }
+    </style>
 </head>
-<body class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 min-h-screen font-sans text-slate-900">
-    <div class="flex items-center justify-center min-h-screen px-4 py-8">
-        <div class="w-full max-w-xl">
+<body class="bg-slate-950 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black min-h-screen font-sans text-slate-100 selection:bg-blue-500/30">
+
+    <div class="flex items-center justify-center min-h-screen px-6 py-12">
+        <div class="w-full max-w-2xl">
             
-            <!-- Input Section -->
-            <div id="inputSection" class="bg-white rounded-xl shadow-2xl p-8 md:p-10 transition-all duration-300">
-                <div class="mb-8 text-center">
-                    <h1 class="text-3xl font-extrabold text-slate-900 mb-2">Security Audit</h1>
-                    <p class="text-slate-500">Scan any domain for basic vulnerabilities</p>
-                </div>
-                
-                <div class="space-y-4">
-                    <div>
+            <div class="mb-10 text-center">
+                <h1 class="text-4xl font-black tracking-tight text-white mb-3">WebRapid<span class="text-blue-500">.</span></h1>
+                <p class="text-slate-400 font-medium">Enterprise-grade security auditing</p>
+            </div>
+
+            <div id="inputSection" class="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 md:p-12 transition-all duration-500">
+                <div class="space-y-6">
+                    <div class="relative">
                         <input 
                             type="text" 
                             id="domainInput" 
-                            placeholder="e.g., example.ie"
-                            class="w-full px-4 py-4 bg-slate-50 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition text-lg"
+                            placeholder="example.com"
+                            class="w-full px-6 py-5 bg-black/40 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition text-xl placeholder:text-slate-600 text-white"
                         >
                     </div>
                     
                     <button 
                         id="auditButton"
                         onclick="runAudit()"
-                        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 rounded-lg transition duration-200"
+                        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-5 rounded-xl transition duration-300 transform active:scale-[0.98] shadow-lg shadow-blue-900/20"
                     >
-                        Run Audit
+                        Initialize Audit
                     </button>
                 </div>
             </div>
 
-            <!-- Loading Section -->
-            <div id="loadingSection" class="hidden bg-white rounded-xl shadow-2xl p-12 text-center">
-                <div class="flex flex-col items-center justify-center space-y-6">
-                    <div class="relative w-16 h-16">
-                        <div class="absolute inset-0 bg-blue-500 rounded-full animate-ping opacity-75"></div>
-                        <div class="absolute inset-2 bg-blue-600 rounded-full"></div>
+            <div id="loadingSection" class="hidden bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-20 text-center">
+                <div class="flex flex-col items-center justify-center">
+                    <div class="relative w-20 h-20 mb-10 flex items-center justify-center">
+                        <div class="ripple-circle w-full h-full"></div>
+                        <div class="ripple-circle ripple-2 w-full h-full"></div>
+                        <div class="ripple-circle ripple-3 w-full h-full"></div>
+                        <div class="relative z-10 w-10 h-10 bg-blue-600 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.5)]"></div>
                     </div>
-                    <p class="text-xl font-semibold text-slate-700">Scanning domain...</p>
+                    <p class="text-lg font-bold text-slate-300 tracking-widest uppercase animate-pulse">Analyzing Protocols</p>
                 </div>
             </div>
 
-            <!-- Results Section -->
-            <div id="resultsSection" class="hidden bg-white rounded-xl shadow-2xl p-8 md:p-10">
+            <div id="resultsSection" class="hidden bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 md:p-12">
                 
-                <!-- Score Card -->
-                <div id="scoreCard" class="mb-8 p-6 rounded-xl border-2 text-center">
-                    <h2 class="text-sm font-bold text-slate-500 uppercase tracking-wider mb-2">Security Score</h2>
-                    <div class="flex items-baseline justify-center space-x-1">
-                        <span id="scoreValue" class="text-6xl font-black"></span>
-                        <span class="text-2xl text-slate-400 font-bold">/100</span>
+                <div id="scoreCard" class="mb-10 p-8 rounded-2xl border border-white/5 text-center transition-colors duration-700">
+                    <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Security Integrity Score</h2>
+                    <div class="flex items-baseline justify-center">
+                        <span id="scoreValue" class="text-8xl font-black tracking-tighter"></span>
+                        <span class="text-2xl text-slate-500 font-bold ml-2">/100</span>
                     </div>
                 </div>
 
-                <!-- Vulnerabilities List -->
-                <div class="mb-8">
-                    <h3 class="text-lg font-bold text-slate-900 mb-4 border-b pb-2">Audit Findings</h3>
-                    <div id="vulnerabilitiesList" class="space-y-3">
-                        <!-- Injected via JS -->
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="space-y-3">
-                    <a 
-                        id="hardeningButton"
-                        class="hidden block w-full text-center bg-slate-900 hover:bg-black text-white font-bold py-4 rounded-lg transition"
-                    >
-                        Request Security Hardening
-                    </a>
-                    <button 
-                        onclick="resetUI()"
-                        class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-4 rounded-lg transition"
-                    >
-                        Scan Another Domain
-                    </button>
-                </div>
-            </div>
-
-            <!-- Error Section -->
-            <div id="errorSection" class="hidden bg-white rounded-xl shadow-2xl p-8 text-center">
-                <div class="text-red-500 text-5xl mb-4">⚠</div>
-                <h3 class="text-xl font-bold text-red-600 mb-2">Audit Failed</h3>
-                <p id="errorMessage" class="text-slate-600 mb-6"></p>
-                <button 
-                    onclick="resetUI()"
-                    class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-3 rounded-lg transition"
-                >
-                    Try Again
-                </button>
-            </div>
-
-        </div>
-    </div>
-
-    <script>
-        const inputEl = document.getElementById('domainInput');
-        
-        // Trigger on Enter key
-        inputEl.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') runAudit();
-        });
-
-        async function runAudit() {
-            let domain = inputEl.value.trim();
-            if (!domain) return alert('Please enter a domain');
-
-            // Clean input if user pasted full URL
-            domain = domain.replace(/^https?:\/\//, '').split('/')[0];
-
-            // Switch to Loading UI
-            document.getElementById('inputSection').classList.add('hidden');
-            document.getElementById('errorSection').classList.add('hidden');
-            document.getElementById('loadingSection').classList.remove('hidden');
-
-            try {
-                // Call the Vercel Python Backend
-                const response = await fetch(`/api/index?domain=${encodeURIComponent(domain)}`);
-                const data = await response.json();
-
-
-
-                if (data.error) throw new Error(data.error);
-
-                renderResults(data, domain);
-            } catch (error) {
-                document.getElementById('errorMessage').innerText = error.message || "Could not connect to the server.";
-                document.getElementById('loadingSection').classList.add('hidden');
-                document.getElementById('errorSection').classList.remove('hidden');
-            }
-        }
-
-        function renderResults(data, domain) {
-            const score = data.score;
-            const vulns = data.vulnerabilities;
-
-            // Update Score Color
-            const scoreCard = document.getElementById('scoreCard');
-            const scoreValue = document.getElementById('scoreValue');
-            
-            scoreValue.innerText = score;
-            scoreCard.className = 'mb-8 p-6 rounded-xl border-2 text-center'; // Reset classes
-            
-            if (score >= 80) {
-                scoreCard.classList.add('border-green-200', 'bg-green-50');
-                scoreValue.classList.add('text-green-600');
-            } else if (score >= 50) {
-                scoreCard.classList.add('border-orange-200', 'bg-orange-50');
-                scoreValue.classList.add('text-orange-500');
-            } else {
-                scoreCard.classList.add('border-red-200', 'bg-red-50');
-                scoreValue.classList.add('text-red-600');
-            }
-
-            // Render Vulnerabilities
-            const listEl = document.getElementById('vulnerabilitiesList');
-            listEl.innerHTML = '';
-            
-            if (vulns.length === 0) {
-                listEl.innerHTML = '<div class="p-4 bg-green-50 text-green-700 rounded-lg font-medium">✅ No major vulnerabilities detected.</div>';
-            } else {
-                vulns.forEach(v => {
-                    listEl.innerHTML += `
-                        <div class="p-4 bg-slate-50 border border-slate-200 rounded-lg">
-                            <h4 class="font-bold text-red-600 mb-1">✕ ${v.name}</h4>
-                            <p class="text-sm text-slate-600">${v.description}</p>
+                <div class="mb-10">
+                    <h3 class="text-sm font-bold text-slate-400 mb-6 uppercase tracking-widest flex items-center">
+                        <span class="w-8 h-[1px] bg-slate-700 mr-3"></span>
+                        Audit Findings
+                    </h3>
+                    <div id="vulnerabilitiesList" class="space-y-4">
                         </div>
-                    `;
-                });
-            }
+                </div>
 
-            // Render Hardening Button (Only if score is less than 100)
-            const btn = document.getElementById('hardeningButton');
-if (score < 100) {
-    // This creates a link that opens the user's email app
-    const subject = encodeURIComponent(`Security Hardening Request for ${domain}`);
-    const body = encodeURIComponent(`Hello,\n\nI ran a security audit on ${domain} and received a score of ${score}/100. I would like to request professional assistance in fixing the following issues:\n\n- ${vulns.map(v => v.name).join('\n- ')}`);
-    
-    btn.href = `mailto: webrapid.apps@gmail.com?subject=${subject}&body=${body}`;
-    btn.classList.remove('hidden');
-} else {
-    btn.classList.add('hidden');
-}
-            // Switch to Results UI
-            document.getElementById('loadingSection').classList.add('hidden');
-            document.getElementById('resultsSection').classList.remove('hidden');
-        }
-
-        function resetUI() {
-            document.getElementById('resultsSection').classList.add('hidden');
-            document.getElementById('errorSection').classList.add('hidden');
-            document.getElementById('inputSection').classList.remove('hidden');
-            inputEl.value = '';
-            inputEl.focus();
-        }
-    </script>
-</body>
-</html>
+                <div class="grid
