@@ -179,18 +179,22 @@
             }
 
             const btn = document.getElementById('hardeningButton');
-            if (score < 100) {
-                const subject = encodeURIComponent(`Security Hardening: ${domain}`);
-                const body = encodeURIComponent(`Audit Score: ${score}/100\n\nIssues detected:\n- ${vulns.map(v => v.name).join('\n- ')}`);
-                btn.href = `mailto:webrapid.apps@gmail.com?subject=${subject}&body=${body}`;
-                btn.classList.remove('hidden');
-            } else {
-                btn.classList.add('hidden');
-            }
-
-            document.getElementById('loadingSection').classList.add('hidden');
-            document.getElementById('resultsSection').classList.remove('hidden');
-        }
+if (score < 100) {
+    const subject = encodeURIComponent(`WebShield Security Report: ${domain}`);
+    // A structured body helps you stay organized
+    const body = encodeURIComponent(
+        `WEB SHIELD AUDIT REPORT\n` +
+        `----------------------\n` +
+        `Domain: ${domain}\n` +
+        `Security Score: ${score}/100\n\n` +
+        `Issues Identified:\n${vulns.map(v => `- [ ] ${v.name}`).join('\n')}\n\n` +
+        `I would like to request a professional DNS & Security hardening for this domain. Please let me know the next steps.`
+    );
+    
+    btn.href = `mailto:webrapid.apps@gmail.com?subject=${subject}&body=${body}`;
+    btn.innerText = "Fix These Issues Now"; // More action-oriented
+    btn.classList.remove('hidden');
+}
 
         function resetUI() {
             document.getElementById('resultsSection').classList.add('hidden');
