@@ -54,7 +54,7 @@ def get_audit_results(domain):
     csp = headers.get("content-security-policy", "")
     if "x-frame-options" not in headers and "frame-ancestors" not in csp:
         score -= 17 
-        vulnerabilities.append({"name": "Missing Clickjacking Shield", "description": "Protection against being embedded in malicious frames is missing."})
+        vulnerabilities.append({"name": "X-Frame-Options", "description": "Protection against being embedded in malicious frames is missing."})
 
     if "strict-transport-security" not in headers:
         score -= 12
@@ -62,7 +62,7 @@ def get_audit_results(domain):
 
     if "x-content-type-options" not in headers:
         score -= 12
-        vulnerabilities.append({"name": "Missing Sniffing Protection", "description": "Prevents browsers from incorrectly interpreting file types."})
+        vulnerabilities.append({"name": "X-Content-Type-Options", "description": "Prevents browsers from incorrectly interpreting file types."})
 
     return {
         "score": max(0, score),
