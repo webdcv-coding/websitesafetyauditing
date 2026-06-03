@@ -13,7 +13,7 @@ def get_audit_results(domain):
     try:
         # 1. Check for SSL and Connection
         # timeout=10 prevents the function from hanging
-        response = requests.get(url, timeout=10, verify=True)
+        response = requests.get(url, timeout=10, verify=True, allow_redirects=True)
         headers = {k.lower(): v for k, v in response.headers.items()}
         
     except requests.exceptions.SSLError:
