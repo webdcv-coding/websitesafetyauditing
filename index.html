@@ -58,4 +58,150 @@
 
             <div id="loadingSection" class="hidden bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl p-20 text-center">
                 <div class="flex flex-col items-center justify-center">
-                    <div class="relative w-20
+                    <div class="relative w-20 h-20 mb-10 flex items-center justify-center">
+                        <div class="ripple-circle w-full h-full"></div>
+                        <div class="ripple-circle ripple-2 w-full h-full"></div>
+                        <div class="ripple-circle ripple-3 w-full h-full"></div>
+                        <div class="relative z-10 w-10 h-10 bg-blue-600 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.5)]"></div>
+                    </div>
+                    <p class="text-lg font-bold text-slate-300 tracking-widest uppercase animate-pulse">Analyzing Protocols</p>
+                </div>
+            </div>
+
+            <div id="resultsSection" class="hidden bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 md:p-12">
+                <div id="scoreCard" class="mb-10 p-8 rounded-2xl border border-white/5 text-center transition-all duration-700">
+                    <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Security Integrity Score</h2>
+                    <div class="flex items-baseline justify-center">
+                        <span id="scoreValue" class="text-8xl font-black tracking-tighter"></span>
+                        <span class="text-2xl text-slate-500 font-bold ml-2">/100</span>
+                    </div>
+                </div>
+
+                <div class="mb-10">
+                    <h3 class="text-sm font-bold text-slate-400 mb-6 uppercase tracking-widest flex items-center">
+                        <span class="w-8 h-[1px] bg-slate-700 mr-3"></span>
+                        Audit Findings
+                    </h3>
+                    <div id="vulnerabilitiesList" class="space-y-4"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <button onclick="resetUI()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-4 rounded-xl transition">
+                        New Scan
+                    </button>
+                    <a id="hardeningButton" class="flex items-center justify-center w-full font-bold py-4 rounded-xl transition shadow-xl"></a>
+                </div>
+            </div>
+
+            <div id="errorSection" class="hidden bg-red-950/20 backdrop-blur-xl border border-red-500/20 rounded-2xl p-12 text-center">
+                <div class="text-red-500 text-4xl mb-4">✕</div>
+                <h3 class="text-xl font-bold text-white mb-2">Audit Interrupted</h3>
+                <p id="errorMessage" class="text-slate-400 mb-8"></p>
+                <button onclick="resetUI()" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition">Return</button>
+            </div>
+
+            <div class="mt-12 text-center px-4 opacity-50 hover:opacity-100 transition-opacity duration-500">
+                <p class="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-medium leading-loose">
+                    Disclaimer: This audit provides a baseline security analysis. Results may vary based on server configurations. 
+                    <span class="block mt-1 italic">Always verify critical infrastructure manually.</span>
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        const inputEl = document.getElementById('domainInput');
+        
+        inputEl.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') runAudit();
+        });
+
+        async function runAudit() {
+            let domain = inputEl.value.trim();
+            if (!domain) return;
+            domain = domain.replace(/^https?:\/\//, '').split('/')[0];
+
+            document.getElementById('inputSection').classList.add('hidden');
+            document.getElementById('errorSection').classList.add('hidden');
+            document.getElementById('loadingSection').classList.remove('hidden');
+
+            try {
+                const response = await fetch(`/api/index?domain=${encodeURIComponent(domain)}`);
+                const data = await response.json();
+                if (data.error) throw new Error(data.error);
+                renderResults(data, domain);
+            } catch (error) {
+                document.getElementById('errorMessage').innerText = error.message;
+                document.getElementById('loadingSection').classList.add('hidden');
+                document.getElementById('errorSection').classList.remove('hidden');
+            }
+        }
+
+        function renderResults(data, domain) {
+            const score = data.score;
+            const vulns = data.vulnerabilities;
+            const scoreCard = document.getElementById('scoreCard');
+            const scoreValue = document.getElementById('scoreValue');
+            const btn = document.getElementById('hardeningButton');
+            
+            document.getElementById('loadingSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.remove('hidden');
+            
+            scoreValue.innerText = score;
+            scoreCard.className = 'mb-10 p-8 rounded-2xl border text-center transition-all duration-700';
+            
+            if (score >= 80) {
+                scoreCard.classList.add('border-green-500/30', 'bg-green-500/5');
+                scoreValue.className = 'text-8xl font-black tracking-tighter text-green-400';
+            } else if (score >= 50) {
+                scoreCard.classList.add('border-orange-500/30', 'bg-orange-500/5');
+                scoreValue.className = 'text-8xl font-black tracking-tighter text-orange-400';
+            } else {
+                scoreCard.classList.add('border-red-500/30', 'bg-red-500/5');
+                scoreValue.className = 'text-8xl font-black tracking-tighter text-red-400';
+            }
+
+            const listEl = document.getElementById('vulnerabilitiesList');
+            listEl.innerHTML = '';
+            if (vulns.length === 0) {
+                listEl.innerHTML = '<div class="p-6 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl font-medium flex items-center">✔ All core protocols verified.</div>';
+            } else {
+                vulns.forEach(v => {
+                    listEl.innerHTML += `<div class="p-6 bg-white/5 border border-white/10 rounded-xl hover:border-white/20 transition group">
+                        <h4 class="font-bold text-red-400 mb-1 tracking-tight">${v.name}</h4>
+                        <p class="text-sm text-slate-400 leading-relaxed">${v.description}</p>
+                    </div>`;
+                });
+            }
+
+            btn.onclick = null;
+            btn.removeAttribute('href');
+            if (score < 100) {
+                const subject = encodeURIComponent(`Security Report: ${domain}`);
+                const body = encodeURIComponent(`WEB SHIELD REPORT\nDomain: ${domain}\nScore: ${score}/100\n\nIssues:\n${vulns.map(v => `- ${v.name}`).join('\n')}\n\nI need help hardening this site.`);
+                btn.href = `mailto:webrapid.apps@gmail.com?subject=${subject}&body=${body}`;
+                btn.innerText = "Fix These Issues Now";
+                btn.className = "flex items-center justify-center w-full bg-white hover:bg-slate-200 text-black font-bold py-4 rounded-xl transition shadow-xl";
+            } else {
+                btn.innerText = "Copy Result to Clipboard 📋";
+                btn.className = "flex items-center justify-center w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition shadow-xl cursor-pointer";
+                btn.onclick = (e) => {
+                    e.preventDefault();
+                    navigator.clipboard.writeText(`🛡️ WebShield Scan: ${domain} scored 100/100! All security headers verified.`);
+                    const oldText = btn.innerText;
+                    btn.innerText = "Copied!";
+                    setTimeout(() => btn.innerText = oldText, 2000);
+                };
+            }
+        }
+
+        function resetUI() {
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('errorSection').classList.add('hidden');
+            document.getElementById('inputSection').classList.remove('hidden');
+            inputEl.value = '';
+        }
+    </script>
+</body>
+</html>
