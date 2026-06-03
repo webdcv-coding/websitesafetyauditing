@@ -179,7 +179,7 @@
             btn.removeAttribute('href');
             if (score < 100) {
                 const subject = encodeURIComponent(`Security Report: ${domain}`);
-                const body = encodeURIComponent(`WEB SHIELD REPORT\nDomain: ${domain}\nScore: ${score}/100\n\nIssues:\n${vulns.map(v => `- ${v.name}`).join('\n')}\n\nI need help hardening this site.`);
+                const body = encodeURIComponent(`WEB SHIELD REPORT\nDomain: ${domain}\nScore: ${score}/100\n\nIssues:\n${vulns.map(v => `- ${v.name}`).join('\n')}\n\nI need help fixing this website.`);
                 btn.href = `mailto:webrapid.apps@gmail.com?subject=${subject}&body=${body}`;
                 btn.innerText = "Fix These Issues Now";
                 btn.className = "flex items-center justify-center w-full bg-white hover:bg-slate-200 text-black font-bold py-4 rounded-xl transition shadow-xl";
