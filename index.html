@@ -194,6 +194,29 @@ if (score < 100) {
     btn.href = `mailto:webrapid.apps@gmail.com?subject=${subject}&body=${body}`;
     btn.innerText = "Fix These Issues Now"; // More action-oriented
     btn.classList.remove('hidden');
+}else {
+    // 2. SUCCESS / CLIPBOARD MODE
+    btn.removeAttribute('href');
+    btn.innerText = "Copy Result to Clipboard 📋";
+    btn.className = "block w-full text-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition shadow-xl cursor-pointer";
+    btn.classList.remove('hidden');
+    
+    btn.onclick = (e) => {
+        e.preventDefault();
+        const shareText = `🛡️ WebShield Scan: ${domain} scored 100/100! All security headers verified.`;
+        
+        navigator.clipboard.writeText(shareText).then(() => {
+            const originalText = btn.innerText;
+            btn.innerText = "Copied! Paste on Social Media to Share your score";
+            btn.classList.replace('bg-indigo-600', 'bg-green-600');
+            
+            // Revert button after 3 seconds
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.classList.replace('bg-green-600', 'bg-indigo-600');
+            }, 3000);
+        });
+    };
 }
 
         function resetUI() {
