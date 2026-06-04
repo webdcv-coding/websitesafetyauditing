@@ -18,6 +18,10 @@
         }
         .ripple-2 { animation-delay: 0.5s; }
         .ripple-3 { animation-delay: 1s; }
+        
+        /* Modal Animation */
+        .modal-enter { opacity: 0; transform: scale(0.9) translateY(20px); }
+        .modal-show { opacity: 1; transform: scale(1) translateY(0); }
     </style>
 </head>
 <body class="bg-slate-950 bg-[radial-gradient(circle_at_top_right,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black min-h-screen font-sans text-slate-100 selection:bg-blue-500/30">
@@ -45,12 +49,7 @@
                             class="w-full px-6 py-5 bg-black/40 border border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 focus:border-transparent transition text-xl placeholder:text-slate-600 text-white"
                         >
                     </div>
-                    
-                    <button 
-                        id="auditButton"
-                        onclick="runAudit()"
-                        class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-5 rounded-xl transition duration-300 transform active:scale-[0.98] shadow-lg shadow-blue-900/20"
-                    >
+                    <button onclick="runAudit()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-5 rounded-xl transition duration-300 transform active:scale-[0.98] shadow-lg shadow-blue-900/20">
                         Initialize Audit
                     </button>
                 </div>
@@ -69,7 +68,7 @@
             </div>
 
             <div id="resultsSection" class="hidden bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-8 md:p-12">
-                <div id="scoreCard" class="mb-10 p-8 rounded-2xl border border-white/5 text-center transition-all duration-700">
+                <div id="scoreCard" class="mb-10 p-8 rounded-2xl border text-center transition-all duration-700">
                     <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Security Integrity Score</h2>
                     <div class="flex items-baseline justify-center">
                         <span id="scoreValue" class="text-8xl font-black tracking-tighter"></span>
@@ -89,33 +88,66 @@
                     <button onclick="resetUI()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-4 rounded-xl transition">
                         New Scan
                     </button>
-                    <a id="hardeningButton" class="flex items-center justify-center w-full font-bold py-4 rounded-xl transition shadow-xl"></a>
+                    <button id="hardeningButton" class="flex items-center justify-center w-full font-bold py-4 rounded-xl transition shadow-xl"></button>
+                </div>
+            </div>
+
+            <div id="modalOverlay" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-6">
+                <div id="instructionModal" class="bg-slate-900 border border-white/20 w-full max-w-lg rounded-[2.5rem] p-8 md:p-10 shadow-2xl transition-all duration-300 modal-enter">
+                    <div class="flex justify-between items-start mb-6">
+                        <h3 class="text-2xl font-black text-white italic">HARDENING STEPS</h3>
+                        <button onclick="closeModal()" class="text-slate-500 hover:text-white transition">✕</button>
+                    </div>
+                    
+                    <div class="space-y-6 text-sm text-slate-300 leading-relaxed">
+                        <p>If you’re missing these, moving your site to Cloudflare is the easiest way to fix them without touching server code.</p>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                                <span class="text-blue-400 font-bold block mb-1">1. SSL/TLS Mode</span>
+                                Set to <span class="text-white font-mono bg-white/10 px-1 rounded">Full (Strict)</span> in SSL/TLS > Overview. (Ensure origin has a valid cert).
+                            </div>
+                            <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                                <span class="text-blue-400 font-bold block mb-1">2. Enable HSTS</span>
+                                In Edge Certificates, toggle HSTS to <span class="text-white font-mono bg-white/10 px-1 rounded">ON</span> with Subdomains & Preload active.
+                            </div>
+                            <div class="bg-white/5 p-4 rounded-2xl border border-white/10">
+                                <span class="text-blue-400 font-bold block mb-1">3. Security Headers</span>
+                                Create a <span class="italic text-white">Transform Rule</span> to add:
+                                <ul class="mt-2 space-y-1 font-mono text-xs text-blue-300">
+                                    <li>• X-Frame-Options: SAMEORIGIN</li>
+                                    <li>• X-Content-Type-Options: nosniff</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-white/10">
+                            <p class="text-slate-400 mb-4 text-center italic">Prefer an expert to handle this for you?</p>
+                            <a id="hireLink" href="#" class="flex items-center justify-center w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 rounded-2xl transition shadow-lg">
+                                Email Me to Secure Your Site
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <div id="errorSection" class="hidden bg-red-950/20 backdrop-blur-xl border border-red-500/20 rounded-2xl p-12 text-center">
                 <div class="text-red-500 text-4xl mb-4">✕</div>
-                <h3 class="text-xl font-bold text-white mb-2">Audit Interrupted</h3>
                 <p id="errorMessage" class="text-slate-400 mb-8"></p>
                 <button onclick="resetUI()" class="px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition">Return</button>
             </div>
 
-            <div class="mt-12 text-center px-4 opacity-50 hover:opacity-100 transition-opacity duration-500">
+            <div class="mt-12 text-center px-4 opacity-50">
                 <p class="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-medium leading-loose">
-                    Disclaimer: This audit provides a baseline security analysis. Results may vary based on server configurations. 
-                    <span class="block mt-1 italic">Always verify critical infrastructure manually.</span>
+                    Disclaimer: This audit provides a baseline security analysis. Results may vary.
                 </p>
             </div>
-
         </div>
     </div>
 
     <script>
         const inputEl = document.getElementById('domainInput');
-        
-        inputEl.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') runAudit();
-        });
+        inputEl.addEventListener('keypress', (e) => { if (e.key === 'Enter') runAudit(); });
 
         async function runAudit() {
             let domain = inputEl.value.trim();
@@ -123,16 +155,14 @@
             domain = domain.replace(/^https?:\/\//, '').split('/')[0];
 
             document.getElementById('inputSection').classList.add('hidden');
-            document.getElementById('errorSection').classList.add('hidden');
             document.getElementById('loadingSection').classList.remove('hidden');
 
             try {
                 const response = await fetch(`/api/index?domain=${encodeURIComponent(domain)}`);
                 const data = await response.json();
-                if (data.error) throw new Error(data.error);
                 renderResults(data, domain);
             } catch (error) {
-                document.getElementById('errorMessage').innerText = error.message;
+                document.getElementById('errorMessage').innerText = "Audit Failed. Check domain.";
                 document.getElementById('loadingSection').classList.add('hidden');
                 document.getElementById('errorSection').classList.remove('hidden');
             }
@@ -140,68 +170,48 @@
 
         function renderResults(data, domain) {
             const score = data.score;
-            const vulns = data.vulnerabilities;
-            const scoreCard = document.getElementById('scoreCard');
-            const scoreValue = document.getElementById('scoreValue');
             const btn = document.getElementById('hardeningButton');
-            
             document.getElementById('loadingSection').classList.add('hidden');
             document.getElementById('resultsSection').classList.remove('hidden');
             
-            scoreValue.innerText = score;
-            scoreCard.className = 'mb-10 p-8 rounded-2xl border text-center transition-all duration-700';
-            
-            if (score >= 80) {
-                scoreCard.classList.add('border-green-500/30', 'bg-green-500/5');
-                scoreValue.className = 'text-8xl font-black tracking-tighter text-green-400';
-            } else if (score >= 50) {
-                scoreCard.classList.add('border-orange-500/30', 'bg-orange-500/5');
-                scoreValue.className = 'text-8xl font-black tracking-tighter text-orange-400';
-            } else {
-                scoreCard.classList.add('border-red-500/30', 'bg-red-500/5');
-                scoreValue.className = 'text-8xl font-black tracking-tighter text-red-400';
-            }
+            document.getElementById('scoreValue').innerText = score;
+            const card = document.getElementById('scoreCard');
+            card.className = 'mb-10 p-8 rounded-2xl border text-center transition-all duration-700 ' + 
+                            (score >= 80 ? 'border-green-500/30 bg-green-500/5 text-green-400' : 
+                             score >= 50 ? 'border-orange-500/30 bg-orange-500/5 text-orange-400' : 
+                             'border-red-500/30 bg-red-500/5 text-red-400');
 
             const listEl = document.getElementById('vulnerabilitiesList');
-            listEl.innerHTML = '';
-            if (vulns.length === 0) {
-                listEl.innerHTML = '<div class="p-6 bg-green-500/10 border border-green-500/20 text-green-400 rounded-xl font-medium flex items-center">✔ All core protocols verified.</div>';
-            } else {
-                vulns.forEach(v => {
-                    listEl.innerHTML += `<div class="p-6 bg-white/5 border border-white/10 rounded-xl hover:border-white/20 transition group">
-                        <h4 class="font-bold text-red-400 mb-1 tracking-tight">${v.name}</h4>
-                        <p class="text-sm text-slate-400 leading-relaxed">${v.description}</p>
-                    </div>`;
-                });
-            }
+            listEl.innerHTML = data.vulnerabilities.length ? '' : '<div class="text-green-400">✔ All verified.</div>';
+            data.vulnerabilities.forEach(v => {
+                listEl.innerHTML += `<div class="p-4 bg-white/5 border border-white/10 rounded-xl"><h4 class="font-bold text-red-400">${v.name}</h4><p class="text-xs text-slate-400">${v.description}</p></div>`;
+            });
 
-            btn.onclick = null;
-            btn.removeAttribute('href');
             if (score < 100) {
-                const subject = encodeURIComponent(`Security Report: ${domain}`);
-                const body = encodeURIComponent(`WEB SHIELD REPORT\nDomain: ${domain}\nScore: ${score}/100\n\nIssues:\n${vulns.map(v => `- ${v.name}`).join('\n')}\n\nI need help fixing this website.`);
-                btn.href = `mailto:webrapid.apps@gmail.com?subject=${subject}&body=${body}`;
                 btn.innerText = "Fix These Issues";
-                btn.className = "flex items-center justify-center w-full bg-white hover:bg-slate-200 text-black font-bold py-4 rounded-xl transition shadow-xl";
+                btn.className = "w-full bg-white text-black font-bold py-4 rounded-xl";
+                btn.onclick = () => openModal(domain, score, data.vulnerabilities);
             } else {
-                btn.innerText = "Copy Result to Clipboard 📋";
-                btn.className = "flex items-center justify-center w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-4 rounded-xl transition shadow-xl cursor-pointer";
-                btn.onclick = (e) => {
-                    e.preventDefault();
-                    navigator.clipboard.writeText(`🛡️ WebShield Scan: ${domain} scored 100/100! All security headers verified.`);
-                    const oldText = btn.innerText;
+                btn.innerText = "Copy Result 📋";
+                btn.className = "w-full bg-indigo-600 text-white font-bold py-4 rounded-xl";
+                btn.onclick = () => {
+                    navigator.clipboard.writeText(`WebShield Scan: ${domain} scored 100/100!`);
                     btn.innerText = "Copied!";
-                    setTimeout(() => btn.innerText = oldText, 2000);
                 };
             }
         }
 
-        function resetUI() {
-            document.getElementById('resultsSection').classList.add('hidden');
-            document.getElementById('errorSection').classList.add('hidden');
-            document.getElementById('inputSection').classList.remove('hidden');
-            inputEl.value = '';
+        function openModal(domain, score, vulns) {
+            const overlay = document.getElementById('modalOverlay');
+            const modal = document.getElementById('instructionModal');
+            const hireLink = document.getElementById('hireLink');
+            
+            const subject = `Security Help: ${domain}`;
+            const body = `Hi,\n\nI scanned my site ${domain} on WebShield and got a score of ${score}/100.\n\nIssues:\n${vulns.map(v => '- ' + v.name).join('\n')}\n\nCan you help me set up the Cloudflare hardening?`;
+            hireLink.href = `mailto:webrapid.apps@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+            
+            overlay.classList.remove('hidden');
+            setTimeout(() => modal.classList.add('modal-show'), 10);
         }
-    </script>
-</body>
-</html>
+
+        function closeModal() {
