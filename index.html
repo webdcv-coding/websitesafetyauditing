@@ -215,3 +215,16 @@
         }
 
         function closeModal() {
+            const modal = document.getElementById('instructionModal');
+            modal.classList.remove('modal-show');
+            setTimeout(() => document.getElementById('modalOverlay').classList.add('hidden'), 300);
+        }
+
+        function resetUI() {
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('inputSection').classList.remove('hidden');
+            inputEl.value = '';
+        }
+    </script>
+</body>
+</html>
